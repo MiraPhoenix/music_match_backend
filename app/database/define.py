@@ -1,6 +1,5 @@
 import sqlalchemy as db
 
-
 DATABASE_URL = 'postgresql://postgres:test@127.0.0.1:54320/postgres?'
 
 engine = db.create_engine(DATABASE_URL)
@@ -37,5 +36,3 @@ reviews = db.Table('reviews', metadata,
 )
 
 metadata.create_all(engine)
-
-music.insert().values(name = 'test')
