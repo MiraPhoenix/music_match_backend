@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:16.2
+    restart: always
+    environment:
+      - PGPASSWORD='test'
+    ports:
+      - '54320:5432'
+    volumes:
+      - db:/var/lib/postgresql/data
+volumes:
+  db:
+    driver: local
