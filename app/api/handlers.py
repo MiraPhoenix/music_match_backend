@@ -110,7 +110,18 @@ class CreateReviewRequest(BaseModel):
 
 @router.post('/music/review')
 async def create_review(req: CreateReviewRequest):
-    return {}
+    try:
+        new_review = Review(
+            user_id=req.user_id,
+            music_id=req.music_id,
+            rating=req.rating,
+            comment=req.comment
+        )
+        db.session.add(new_review)
+        db.session.commit()
+        return {"message": "Review created successfully"}
+    except Exception as error:
+            raise HTTPException(status_code=500, detail="Failed to create review: " + str(error))
 
 class Review(BaseModel):
     id: int
