@@ -36,3 +36,7 @@ reviews = db.Table('reviews', metadata,
 )
 
 metadata.create_all(engine)
+
+result = conn.execute(db.select(users)).all()
+for row in result:
+  print(f"ID: {row.id}, Username: {row.username}, Email: {row.email}, password {row.password}")

@@ -14,6 +14,7 @@ origins = [
     "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:8000",
+    "http://localhost:5500"
 ]
 
 app.add_middleware(
@@ -47,6 +48,7 @@ async def register_user(req: RegisterUserRequest):
     except Exception as error:
         raise HTTPException(status_code=500, detail="Failed to create user: " + str(error))
 
+
 class LoginUserRequest(BaseModel):
     login: str
     password: str
@@ -58,6 +60,8 @@ class LoginUserResponse(BaseModel):
 
 @router.post('/user/login')
 async def login_user(req: LoginUserRequest):
+    # return db.get_user_by_email_or_login(loginn)
+    # return req
     try:
         user = db.get_user_by_email_or_login(req.login)
         if not bcrypt.checkpw(req.password.encode('utf-8'), user.password.encode('utf-8')):
@@ -94,26 +98,40 @@ class GetUserResponse(BaseModel):
 
 
 @router.get('/user')
-async def get_user(id: int):
-    if id not in db:
-        raise HTTPException(status_code=404, detail="User not found")
-    user = db[id]
-    reviews = db.get(id, [])
-    all_marks = sum(review['mark'] for review in reviews) / len(reviews) if reviews else 0
-    return List[GetUserResponse]
+async def get_user(id: str):
+    try:
+
+        # if id not in db:
+        #     raise HTTPException(status_code=404, detail="User not found")
+        user = db.get_user_by_id(id)
+        return user
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Failed to get user: " + str(error))
+    # print('1')
+    # user = db[id]
+    # print('2')
+    # reviews = db.get(id, [])
+    # print('3')
+    # all_marks = sum(review['mark'] for review in reviews) / len(reviews) if reviews else 0
+    # print('4')
+    return user
+
 
 class Review(BaseModel):
-    id: int
+    id: str
     user_id: int
     music_id: int
     mark: int
     text: str
 
-@router.get('/user/reviews')
-async def get_user_reviews(id: int):
-    if id not in db:
-        raise HTTPException(status_code=404, detail="Reviews not found")
-    return List[Review]
+
+@router.get('/user/reviews/{user_id}')
+async def get_user_reviews(id: str):
+    try:
+        reviews = db.get_reviews_by_user_id(id)
+        return reviews
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Failed to get user reviews: " + str(error))
 
 
 class Music(BaseModel):
@@ -124,54 +142,67 @@ class Music(BaseModel):
     data: str
 
 
-@router.get('/musics', response_model=List[Music])
+@router.get('/musics')
 async def get_musics():
-    return List[Music]
+    try:
+        musics = db.get_all_musics()
+        return musics
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Failed to get musics: " + str(error))
 
-@router.get('/music', response_model=Music)
-async def get_music(id: int):
-    if id not in db:
-        raise HTTPException(status_code=404, detail="Song is not found")
-    return List[Music]
 
-@router.get('/music/search', response_model=List[Music])
-async def search_music(text: str):
-    if text not in db:
-        raise HTTPException(status_code=404, detail="Song is not found")
-    return List[Music]
+@router.get('/music/{id}')
+async def get_music(id: str):
+    try:
+        music = db.get_music_by_id(id)
+        return music
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Failed to get music: " + str(error))
+
+
+@router.get('/music/search')
+async def search_music(query: str):
+    try:
+        results = search_music(query)
+        return results
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Failed to search music: " + str(error))
 
 
 class CreateReviewRequest(BaseModel):
-    token: str
     id: int
     text: str
     mark: int
+    music_id: int
+
+
+
+# class Review(BaseModel):
+#     user_id: int
+#     music_id: int
+#     text: str
+#     mark: int
 
 
 @router.post('/music/review')
 async def create_review(req: CreateReviewRequest):
     try:
-        new_review = Review(
-            user_id=req.user_id,
+        new_review = db.Review(
+            user_id=req.id,
             music_id=req.music_id,
-            rating=req.rating,
-            comment=req.comment
+            rating=req.mark,
+            comment=req.text
         )
-        db.session.add(new_review)
-        db.session.commit()
+        db.create_review(new_review)
         return {"message": "Review created successfully"}
     except Exception as error:
-            raise HTTPException(status_code=500, detail="Failed to create review: " + str(error))
-
-class Review(BaseModel):
-    id: int
-    reviewer_id: int
-    text: str
-    mark: int
+        raise HTTPException(status_code=500, detail="Failed to create review: " + str(error))
 
 
-@router.get('/music/review', response_model=List[Review])
-async def get_reviews(id: int):
-    if id not in db:
-        return []
-    return List[Review]
+@router.get('/music/review')
+async def get_reviews(music_id: str):
+    try:
+        reviews = db.get_reviews_by_music_id(music_id)
+        return reviews
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Failed to get music review: " + str(error))
