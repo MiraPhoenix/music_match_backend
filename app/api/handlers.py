@@ -75,18 +75,27 @@ async def login_user(req: LoginUserRequest):
 
 
 class UpdateUserRequest(BaseModel):
-    login: str
-    email: str
-    avatar: str
+    id: str
+    username: str
+    mail: str
+    pswrd: int
+    icon: str
 
 
 @router.put('/user')
 async def update_user(req: UpdateUserRequest):
-    if id not in db:
-        raise HTTPException(status_code=404, detail="User not found")
-    user = db[id]
-    user.update(req.dict())
-    return {"message": "User updated successfully"}
+    try:
+        new_user_data = db.User(
+            id = req.id,
+            username = req.username,
+            email = req.mail,
+            password = req.pswrd,
+            avatar = req.icon
+        )
+        db.update_user_data(new_user_data)
+        return {"message": "User updated successfully"}
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Failed to update user: " + str(error))
 
 
 class GetUserResponse(BaseModel):
@@ -126,9 +135,9 @@ class Review(BaseModel):
 
 
 @router.get('/user/reviews/{user_id}')
-async def get_user_reviews(id: str):
+async def get_user_reviews(user_id: int):
     try:
-        reviews = db.get_reviews_by_user_id(id)
+        reviews = db.get_reviews_by_user_id(user_id)
         return reviews
     except Exception as error:
         raise HTTPException(status_code=500, detail="Failed to get user reviews: " + str(error))
@@ -160,10 +169,10 @@ async def get_music(id: str):
         raise HTTPException(status_code=500, detail="Failed to get music: " + str(error))
 
 
-@router.get('/music/search')
+@router.get('/music_search')
 async def search_music(query: str):
     try:
-        results = search_music(query)
+        results = db.search_music(query)
         return results
     except Exception as error:
         raise HTTPException(status_code=500, detail="Failed to search music: " + str(error))
@@ -199,10 +208,13 @@ async def create_review(req: CreateReviewRequest):
         raise HTTPException(status_code=500, detail="Failed to create review: " + str(error))
 
 
-@router.get('/music/review')
+@router.get('/music_review')
 async def get_reviews(music_id: str):
     try:
         reviews = db.get_reviews_by_music_id(music_id)
         return reviews
     except Exception as error:
         raise HTTPException(status_code=500, detail="Failed to get music review: " + str(error))
+
+
+

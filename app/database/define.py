@@ -16,7 +16,7 @@ users = db.Table('users', metadata,
 )
 
 musicIDSeq = db.Sequence('music_id_seq')
-music = db.Table('music', metadata,
+musics = db.Table('music', metadata,
   db.Column('id', db.Integer, musicIDSeq, primary_key=True),
   db.Column('name', db.Text),
   db.Column('singer', db.Text),
